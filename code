@@ -1,0 +1,1108 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+
+[Serializable]
+class BOOKING
+{
+    int id;
+    double price;
+    int NoSeats;
+    string name;
+    string date;
+
+    public BOOKING()
+    {
+
+    }
+
+    public string Date
+    { get { return date; } set { date = value; } }
+
+    public int ID
+    { get { return id; } set { id = value; } }
+
+    public int numOfSeats
+    { get { return NoSeats; } set { NoSeats = value; } }
+
+    public double Price
+    { get { return price; } set { price = value; } }
+
+    public string Name
+    { get { return name; } set { name = value; } }
+
+    public void BDB(string filename)
+    {
+
+        bool check = false;
+        BOOKING[] m = new BOOKING[1000];
+        FileStream fs2 = new FileStream(filename, FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        if (fs2.Length == 0)
+            Console.WriteLine("there is not any booking record for this customer");
+
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (BOOKING)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        for (int j = 0; j < i; j++)
+            if (this.id == m[j].ID)
+                check = true;
+
+        if (check == false)
+        {
+            FileStream fs = new FileStream(filename, FileMode.Append, FileAccess.Write);
+            bf.Serialize(fs, this);
+            fs.Close();
+        }
+        //CUSTOMERS call = new CUSTOMERS("none", "none");
+        //call.displayOptions();  //error
+    }
+
+
+}
+[Serializable]
+class CUSTOMERS
+{
+    string UserName;
+    string Password;
+    public string user
+    { get { return UserName; } }
+    public string pass
+    { get { return Password; } }
+    public CUSTOMERS()
+    {
+        UserName = "";
+        Password = "";
+    }
+
+    public CUSTOMERS(string n, string p)
+    {
+        UserName = n;
+        Password = p;
+    }
+
+    public void ShowAllAvailableMoviesShows()
+    {
+        MOVIES_SHOWS[] m = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        for (int j = 0; j < i; j++)
+        {
+            m[j].print();
+        }
+        displayOptions();
+    }
+
+    public void CDB()
+    {
+        CUSTOMERS[] c = new CUSTOMERS[1000];
+        FileStream fs2 = new FileStream("CDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            c[i] = (CUSTOMERS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        bool check = true;
+        for (int j = 0; j < i; j++)
+        {
+            if ((this.UserName == c[j].UserName) && (this.Password == c[j].Password))
+            {
+                check = false;
+                break;
+            }
+        }
+
+        if (check == true)
+        {
+            FileStream fs = new FileStream("CDB.txt", FileMode.Append, FileAccess.Write);
+            bf.Serialize(fs, this);
+            fs.Close();
+        }
+
+    }
+
+    public int RandomNumber(int min, int max)
+    {
+        Random random = new Random();
+        return random.Next(min, max);
+    }
+
+    public void BookATicket()
+    {
+        string x, y;
+        int z;
+        bool check = false;
+        Console.Write("Enter Movie's Category you like to book, Please: ");
+        x = Console.ReadLine();
+        Console.Write("Enter  the number of seats you want to book (up to 5 seats), Please: ");
+        y = Console.ReadLine();
+        z = Convert.ToInt32(y);
+
+        MOVIES_SHOWS[] m = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        for (int j = 0; j < i; j++)
+        {
+            if (z > 5) { Console.WriteLine("number of seats is greater than 5 , error"); break; }
+
+            else if ((m[j].category == x) && (m[j].NumOfAvailableSeats >= z))
+            {
+                m[j].print();
+                check = true;
+
+            }
+
+
+        }
+
+        if (check == false)
+        {
+            Console.WriteLine("sorry, there aren't enough seats or not found category");
+        }
+
+        string id, d;
+        int g;
+        if (check == true)
+        {
+            Console.Write("Enter the ID of the desired movie show, Please: ");
+            id = Console.ReadLine();
+            g = Convert.ToInt32(id);
+            Console.Write("Enter the booking date, Please: ");
+            d = Console.ReadLine();
+
+            for (int f = 0; f < i; f++)
+            {
+                if (m[f].id == g)
+                {
+                    m[f].NumOfAvailableSeats = m[f].NumOfAvailableSeats - z;
+                    BOOKING b = new BOOKING();
+                    b.Price = z * m[f].price;
+                    b.numOfSeats = z;
+                    b.ID = RandomNumber(1, 1000);
+                    b.Name = m[f].name;
+                    b.Date = d;
+                    b.BDB(this.UserName);
+
+                    FileStream fs = new FileStream("MDB.txt", FileMode.Create, FileAccess.Write);
+                    for (int j = 0; j < i; j++)
+                    {
+
+                        bf.Serialize(fs, m[j]);
+
+
+                    }
+                    fs.Close();
+
+
+
+                    break;
+                }
+            }
+        }
+        //displayOptions();
+    }
+
+
+    public void showAllBookingRecords()
+    {
+        BOOKING[] m = new BOOKING[1000];
+        FileStream fs2 = new FileStream(this.UserName, FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        bool h = false;
+        if (/*fs2.Position == */fs2.Length == 0)
+        {
+            Console.WriteLine("there is not any booking record for this customer");
+            h = true;
+        }
+
+
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (BOOKING)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        if (h == false)
+            for (int j = 0; j < i; j++)
+            {
+                Console.WriteLine(m[j].ID + "  " + m[j].Name + "  " + m[j].numOfSeats + "  " + m[j].Price + "  " + m[j].Date);
+            }
+
+        //displayOptions();
+    }
+
+    public void CancelBooking()
+    {
+        showAllBookingRecords();
+
+
+
+        BOOKING[] m = new BOOKING[1000];
+        FileStream fs3 = new FileStream(this.UserName, FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        bool check = false;
+        if (fs3.Length == 0)
+        { Console.WriteLine("no booking to cancel"); check = true; }
+
+        while (fs3.Position < fs3.Length)
+        {
+            m[i] = (BOOKING)bf.Deserialize(fs3);
+            i++;
+        }
+        fs3.Close();
+
+
+
+        MOVIES_SHOWS[] mdb = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        int a = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            mdb[a] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            a++;
+        }
+        fs2.Close();
+
+        if (check == false)
+        {
+            string x;
+            int y;
+            Console.Write("please,r enter the booking id to be canceled: ");
+            x = Console.ReadLine();
+            y = Convert.ToInt32(x);
+
+            FileStream fs = new FileStream(this.UserName, FileMode.Create, FileAccess.Write);
+            for (int j = 0; j < i; j++)
+            {
+                for (int t = 0; t < a; t++)
+                {
+                    if (m[j].ID == mdb[t].id && m[j].Name == mdb[t].name)
+                        mdb[t].NumOfAvailableSeats = mdb[t].NumOfAvailableSeats + m[j].numOfSeats;
+
+                }
+
+                if (y != m[j].ID)
+                {
+                    bf.Serialize(fs, m[j]);
+                }
+
+
+            }
+            fs.Close();
+
+
+            FileStream fs1 = new FileStream("MDB.txt", FileMode.Create, FileAccess.Write);
+            for (int j = 0; j < a; j++)
+            {
+                bf.Serialize(fs1, mdb[j]);
+            }
+            fs1.Close();
+
+        }
+        //displayOptions();
+    }
+    public bool CustomerValidation(CUSTOMERS data)
+    {
+        bool check = false;
+
+        if (data.user == "Sara" && data.pass == "s188") { check = true; }
+        else if (data.user == "Khaled" && data.pass == "k232") { check = true; }
+        else if (data.user == "Mona" && data.pass == "m555") { check = true; }
+        else if (data.user == "Laila" && data.pass == "l211") { check = true; }
+        else if (data.user == "Basel" && data.pass == "b565") { check = true; }
+        else if (data.user == "Hashem" && data.pass == "h120") { check = true; }
+        else { check = false; }
+
+        return check;
+    }
+
+    public void displayOptions()
+    {
+        Console.WriteLine("");
+        Console.WriteLine("1- Book a ticket");
+        Console.WriteLine("2- Cancel a booking");
+        Console.WriteLine("3- Show all my booking records");
+        Console.WriteLine("4- Show all available movies shows");
+        Console.WriteLine("5- Return back to login screen");
+        string customerChoice = Console.ReadLine();
+        int customerChoice1 = Convert.ToInt32(customerChoice);
+
+        if (customerChoice1 == 1)
+        {
+            BookATicket();
+            displayOptions();
+        }
+        else if (customerChoice1 == 2)
+        {
+            CancelBooking();
+            displayOptions();
+        }
+        else if (customerChoice1 == 3)
+        {
+            showAllBookingRecords();
+            displayOptions();
+        }
+        else if (customerChoice1 == 4)
+        {
+            ShowAllAvailableMoviesShows();
+            //displayOptions();
+            // login();
+
+        }
+        else if (customerChoice1 == 5)
+        {
+            showAllBookingRecords();
+        }
+        else if (customerChoice1 != 6)
+        {
+            Console.WriteLine("Error, wrong input");
+        }
+        else
+        {
+            login();
+        }
+
+    }
+    public void login()
+    {
+        ADMINISTRATOR admin = new ADMINISTRATOR("manager", "manager");
+        Console.WriteLine("");
+        Console.WriteLine("1- Login as Adminstrator");
+        Console.WriteLine("2- Login as Customer");
+        Console.WriteLine("3- Exit");
+        Console.WriteLine("");
+        Console.Write("Enter your choice: ");
+        string choice = Console.ReadLine();
+        //int Choice = Convert.ToInt32(choice);  //casting
+        bool check = false;
+        while (check == false)  //check if option is valid
+        {
+            if ((choice == "1" || choice == "2" || choice == "3"))
+            {
+                check = true;
+            }
+
+            else
+            {
+                Console.Write("error, Please enter a valid choice: ");  //exception for the char and strings ,, fix this
+                choice = Console.ReadLine();
+                //Choice = Convert.ToInt32(choice);
+            }
+        }
+        //validation //done!
+
+        if (choice == "1")
+        {
+            Console.WriteLine("");
+            Console.Write("Enter your username: ");
+            string username;
+            username = Console.ReadLine();
+            Console.Write("Enter your password: ");
+            string password;
+            password = Console.ReadLine();
+            if (username == admin.username && password == admin.password)
+            {
+                admin.displayOptions();
+            }
+            else
+            {
+                Console.WriteLine("Error, your username/password is wrong or not in the database");
+            }
+        }
+
+        else if (choice == "2")
+        {
+            Console.WriteLine("");
+            Console.Write("Enter your username: ");
+            string username;
+            username = Console.ReadLine();
+            Console.Write("Enter your password: ");
+            string password;
+            password = Console.ReadLine();
+            //int k = 0;
+            //CUSTOMERS[] newCustomers = new CUSTOMERS[1000];  //the entered customers from user
+            //newCustomers[k] = new CUSTOMERS(username, password);
+            //check if valid
+            CUSTOMERS test = new CUSTOMERS(username, password);
+            bool checkValid = test.CustomerValidation(test);
+            //checkValid = test.CustomerValidation(test);
+            //CustomerValidation(data)
+            //k++;
+            if (checkValid == false)
+            {
+                Console.WriteLine("Your username/is wrong or not in the database!");
+            }
+            else
+            {
+                Console.WriteLine(" *** Weclome " + test.user + " ***");
+                test.displayOptions();
+            }
+        }
+        else if (choice != "3")
+        {
+            Console.WriteLine("Error, wrong input");
+        }
+
+    }
+}
+
+[Serializable]
+class MOVIES_SHOWS
+{
+    int ID;
+    string Name;
+    string Date;
+    string Time;
+    int NoOfAvailableSeats = 50;
+    string Category;
+    int TicketPrice;
+
+    public MOVIES_SHOWS()
+    {
+        ID = 0;
+        Name = "";
+        Date = "";
+        Time = "";
+        NoOfAvailableSeats = 50;
+        Category = "";
+        TicketPrice = 0;
+    }
+
+    public MOVIES_SHOWS(int id, string n, string d, string t, int no, string c, int p)
+    {
+        ID = id;
+        Name = n;
+        Date = d;
+        Time = t;
+        NoOfAvailableSeats = no;
+        Category = c;
+        TicketPrice = p;
+    }
+
+    public int NumOfAvailableSeats
+    {
+        get { return NoOfAvailableSeats; }
+        set { NoOfAvailableSeats = value; }
+    }
+
+    public string category
+    { get { return Category; } }
+
+    public int id
+    { get { return ID; } }
+
+    public string time
+    { get { return Time; } }
+
+    public string date
+    { get { return Date; } }
+
+    public string name
+    { get { return Name; } }
+
+    public int price
+    {
+        get { return TicketPrice; }
+        set
+        {
+            if (value > 0)
+                TicketPrice = value;
+            else Console.WriteLine("error");
+        }
+    }
+
+
+    public void MDB()
+    {
+        MOVIES_SHOWS[] m = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+        bool check = true;
+        for (int j = 0; j < i; j++)
+        {
+            if (this.ID == m[j].ID)
+            {
+                check = false;
+                break;
+            }
+            //check price
+            if (this.TicketPrice <= 0)
+            {
+                Console.WriteLine("price is less than or equal zero");
+                Console.WriteLine("");
+                check = false;
+                break;
+            }
+            //check num of available seats
+            if (this.NoOfAvailableSeats <= 0)
+            {
+                Console.WriteLine("available seats are less than zero or more than 50");
+                Console.WriteLine("");
+                check = false;
+                break;
+            }
+            // check date and time 
+            if ((this.Time == m[j].Time) && (this.Date == m[j].Date))
+            {
+                Console.WriteLine(m[j].Name + "  Will be shown at this time on the same day");
+                Console.WriteLine("");
+                check = false;
+                break;
+            }
+
+        }
+        if (check == true)
+        {
+            FileStream fs = new FileStream("MDB.txt", FileMode.Append, FileAccess.Write);
+            bf.Serialize(fs, this);
+            fs.Close();
+        }
+    }
+
+    public void print()
+    {
+        Console.WriteLine(ID + " " + Name + " " + Time + " " + Date + " " + NoOfAvailableSeats + " " + Category + " " + TicketPrice + "JD");
+    }
+
+}
+[Serializable]
+class ADMINISTRATOR
+{
+    string UserName;
+    string Password;
+    public string username
+    {
+        get { return UserName; }
+    }
+    public string password
+    {
+        get { return Password; }
+    }
+
+    public ADMINISTRATOR(string n, string p)
+    {
+        UserName = n;
+        Password = p;
+    }
+
+    public void ADB()
+    {
+        FileStream fs = new FileStream("ADB.txt", FileMode.Create, FileAccess.Write);
+        BinaryFormatter bf = new BinaryFormatter();
+        bf.Serialize(fs, this);
+        fs.Close();
+    }
+
+    public void ShowAllAvailableMoviesShows()
+    {
+        MOVIES_SHOWS[] m = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        for (int j = 0; j < i; j++)
+        {
+            m[j].print();
+        }
+        //displayOptions();
+    }
+
+    public void AddNewMovieShow()
+    {
+        MOVIES_SHOWS[] m = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        string w, x, y, h, k;
+        int b;
+        Console.Write("Enter Movie's Name, Please: ");
+        w = Console.ReadLine();
+        Console.Write("Enter Movie's Date day/month/year , Please: ");
+        x = Console.ReadLine();
+        Console.Write("Enter Movie's Time hr:min:sec , Please: ");
+        y = Console.ReadLine();
+        Console.Write("Enter Movie's Category , Please: ");
+        h = Console.ReadLine();
+        Console.Write("Enter Movie's Price (price>0) , Please: ");
+        k = Console.ReadLine();
+        b = Convert.ToInt32(k);
+        Console.WriteLine("");
+
+        MOVIES_SHOWS new_movie = new MOVIES_SHOWS(i + 1, w, x, y, 50, h, b);
+
+        new_movie.MDB();
+        //displayOptions();
+    }
+
+    public void CancelMovieShowOnSpecificDate()
+    {
+        MOVIES_SHOWS[] m = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        string x;
+        Console.Write("Enter Movie's Date day/month/year  For The Movie you want to cancel, Please: ");
+        x = Console.ReadLine();
+
+        Console.WriteLine("");
+
+        FileStream fs = new FileStream("MDB.txt", FileMode.Create, FileAccess.Write);
+        for (int j = 0; j < i; j++)
+        {
+            if (x != m[j].date)
+            {
+                bf.Serialize(fs, m[j]);
+            }
+
+
+        }
+        fs.Close();
+
+        // ShowAllAvailableMoviesShows();
+
+        CUSTOMERS[] c = new CUSTOMERS[1000];
+        FileStream fs3 = new FileStream("CDB.txt", FileMode.Open, FileAccess.Read);
+
+        int Z = 0;
+        while (fs3.Position < fs3.Length)
+        {
+            c[Z] = (CUSTOMERS)bf.Deserialize(fs3);
+            Z++;
+        }
+        fs3.Close();
+
+        for (int j = 0; j < Z; j++)
+        {
+            BOOKING[] B = new BOOKING[1000];
+            FileStream fs6 = new FileStream(c[j].user, FileMode.Open, FileAccess.Read);
+
+            int s = 0;
+
+
+            while (fs6.Position < fs6.Length)
+            {
+                B[s] = (BOOKING)bf.Deserialize(fs6);
+                s++;
+            }
+            fs6.Close();
+
+            FileStream fs7 = new FileStream(c[j].user, FileMode.Create, FileAccess.Write);
+            for (int s1 = 0; s1 < s; s1++)
+            {
+
+                if (x != B[s1].Date)
+                { bf.Serialize(fs7, B[s1]); }
+
+            }
+            fs7.Close();
+        }
+
+    }
+
+    public void ChangePriceForMovieShow()
+    {
+        ShowAllAvailableMoviesShows();
+
+        MOVIES_SHOWS[] m = new MOVIES_SHOWS[1000];
+        FileStream fs2 = new FileStream("MDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            m[i] = (MOVIES_SHOWS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        string x, y;
+        int a, b;
+        Console.Write("Enter Movie's ID you want to change, Please: ");
+        x = Console.ReadLine();
+        a = Convert.ToInt32(x);
+        Console.Write("Enter Movie's Price you want to change, Please: ");
+        y = Console.ReadLine();
+        b = Convert.ToInt32(y);
+
+        FileStream fs = new FileStream("MDB.txt", FileMode.Create, FileAccess.Write);
+        for (int j = 0; j < i; j++)
+        {
+
+            if (m[j].id == a)
+            {
+                m[j].price = b;
+            }
+
+            bf.Serialize(fs, m[j]);
+
+        }
+        fs.Close();
+        ShowAllAvailableMoviesShows();
+        //displayOptions();
+    }
+
+    public void ShowAllBookingRecordsForAllCustomers()
+    {
+        CUSTOMERS[] c = new CUSTOMERS[1000];
+        FileStream fs2 = new FileStream("CDB.txt", FileMode.Open, FileAccess.Read);
+        BinaryFormatter bf = new BinaryFormatter();
+        int i = 0;
+        while (fs2.Position < fs2.Length)
+        {
+            c[i] = (CUSTOMERS)bf.Deserialize(fs2);
+            i++;
+        }
+        fs2.Close();
+
+        for (int j = 0; j < i; j++)
+        {
+            Console.WriteLine(c[j].user);
+            c[j].showAllBookingRecords();
+        }
+        // displayOptions();
+    }
+
+    public void displayOptions()
+    {
+        Console.WriteLine("");
+        Console.WriteLine(" *** Welcome Administrator ***");
+        Console.WriteLine("");
+        Console.WriteLine("1- Add new movie show");
+        Console.WriteLine("2- Change price for a movie show");
+        Console.WriteLine("3- Cancel movie show on specific date");
+        Console.WriteLine("4- Show all available movies shows");
+        Console.WriteLine("5- Show all booking record for all customers");
+        Console.WriteLine("6- Return back to login screen");
+        Console.WriteLine("");
+        Console.WriteLine("Enter your choice: ");
+        //done with the display
+        string adminChoice = Console.ReadLine();
+        int adminChoice1 = Convert.ToInt32(adminChoice);
+
+        if (adminChoice1 == 1)
+        {
+            //add a new movie
+            AddNewMovieShow();
+            displayOptions();
+
+        }
+        if (adminChoice1 == 2)
+        {
+            //Change price for a movie show
+            ChangePriceForMovieShow();
+            displayOptions();
+
+        }
+        if (adminChoice1 == 3)
+        {
+            //Cancel movie show on specific date
+            CancelMovieShowOnSpecificDate();
+            displayOptions();
+
+        }
+        if (adminChoice1 == 4)
+        {
+            //Show all available movies shows
+            ShowAllAvailableMoviesShows();
+            displayOptions();
+
+        }
+        if (adminChoice1 == 5)
+        {
+            ShowAllBookingRecordsForAllCustomers();
+            displayOptions();
+
+        }
+        else if (adminChoice1 == 6)
+        {
+            //return
+            login();
+        }
+        else
+        {
+            //Console.WriteLine("error, wrong choice");
+            //login();
+        }
+
+    }
+    public void login()
+    {
+        ADMINISTRATOR admin = new ADMINISTRATOR("manager", "manager");
+        Console.WriteLine("");
+        Console.WriteLine("1- Login as Adminstrator");
+        Console.WriteLine("2- Login as Customer");
+        Console.WriteLine("3- Exit");
+        Console.WriteLine("");
+        Console.Write("Enter your choice: ");
+        string choice = Console.ReadLine();
+        //int Choice = Convert.ToInt32(choice);  //casting
+        bool check = false;
+        while (check == false)  //check if option is valid
+        {
+            if (choice == "1" || choice == "2" || choice == "3")
+            {
+                check = true;
+            }
+
+            else
+            {
+                Console.Write("error, Please enter a valid choice: ");  //exception for the char and strings ,, fix this
+                choice = Console.ReadLine();
+                //Choice = Convert.ToInt32(choice);
+            }
+        }
+        //validation //done!
+
+        if (choice == "1")
+        {
+            Console.WriteLine("");
+            Console.Write("Enter your username: ");
+            string username;
+            username = Console.ReadLine();
+            Console.Write("Enter your password: ");
+            string password;
+            password = Console.ReadLine();
+            if (username == admin.username && password == admin.password)
+            {
+                admin.displayOptions();
+            }
+            else
+            {
+                Console.WriteLine("Error, your username/password is wrong or not in the database");
+            }
+        }
+
+        else if (choice == "2")
+        {
+            Console.WriteLine("");
+            Console.Write("Enter your username: ");
+            string username;
+            username = Console.ReadLine();
+            Console.Write("Enter your password: ");
+            string password;
+            password = Console.ReadLine();
+            //int k = 0;
+            //CUSTOMERS[] newCustomers = new CUSTOMERS[1000];  //the entered customers from user
+            //newCustomers[k] = new CUSTOMERS(username, password);
+            //check if valid
+            CUSTOMERS test = new CUSTOMERS(username, password);
+            bool checkValid = test.CustomerValidation(test);
+            //checkValid = test.CustomerValidation(test);
+            //CustomerValidation(data)
+            //k++;
+            if (checkValid == false)
+            {
+                Console.WriteLine("Your username/is wrong or not in the database!");
+            }
+            else
+            {
+                Console.WriteLine(" *** Weclome " + test.user + " ***");
+                test.displayOptions();
+            }
+        }
+        else if (choice != "3")
+        {
+            Console.WriteLine("Error, wrong input");
+        }
+
+    }
+
+}
+
+
+
+
+
+
+
+
+
+namespace FinalCode
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            FileStream fs1 = new FileStream("MDB.txt", FileMode.Append, FileAccess.Write);
+            fs1.Close();
+
+            FileStream fs2 = new FileStream("CDB.txt", FileMode.Append, FileAccess.Write);
+            fs2.Close();
+
+
+
+            MOVIES_SHOWS[] m = new MOVIES_SHOWS[10];
+
+            m[0] = new MOVIES_SHOWS(1, "Robin Hood", "27/4/2019", "18:00:00", 50, "Kids", 5);
+            m[1] = new MOVIES_SHOWS(2, "Black Gold", "10/5/2019", "20:00:00", 47, "Action", 7);
+            m[2] = new MOVIES_SHOWS(3, "Dolphin Tale", "14/5/2019", "18:00:00", 50, "Comedy", 5);
+            m[3] = new MOVIES_SHOWS(4, "The Eagle", "14/5/2019", "22:00:00", 35, "Adventure", 10);
+            m[4] = new MOVIES_SHOWS(5, "Man Of Steel", "22/6/2019", "18:00:00", 12, "Action", 6);
+            m[5] = new MOVIES_SHOWS(6, "Lion", "3/7/2019", "20:00:00", 4, "Adventure", 5);
+            m[6] = new MOVIES_SHOWS(7, "The Matrix", "15/7/2019", "22:00:00", 22, "Action", 10);
+            m[7] = new MOVIES_SHOWS(8, "Ninja Scroll", "2/8/2019", "18:00:00", 42, "Kids", 7);
+            m[8] = new MOVIES_SHOWS(9, "The Hunter", "13/8/2019", "20:00:00", 2, "Adventure", 12);
+            m[9] = new MOVIES_SHOWS(10, "Deep Gold", "10/9/2019", "22:00:00", 50, "Adventure", 10);
+
+            for (int i = 0; i < 10; i++)
+                m[i].MDB();
+
+
+            CUSTOMERS[] c = new CUSTOMERS[6];
+
+            c[0] = new CUSTOMERS("Sara", "s188");
+            c[1] = new CUSTOMERS("Khaled", "k232");
+            c[2] = new CUSTOMERS("Mona", "m555");
+            c[3] = new CUSTOMERS("Laila", "l211");
+            c[4] = new CUSTOMERS("Basel", "b565");
+            c[5] = new CUSTOMERS("Hashem", "h120");
+
+            for (int i = 0; i < 6; i++)
+            {
+                c[i].CDB();
+                FileStream fs = new FileStream(c[i].user, FileMode.Append, FileAccess.Write);
+                fs.Close();
+            }
+
+            ADMINISTRATOR admin = new ADMINISTRATOR("manager", "manager");
+            admin.ADB();
+
+            //display the login options 
+            Console.WriteLine("");
+            Console.WriteLine("1- Login as Adminstrator");
+            Console.WriteLine("2- Login as Customer");
+            Console.WriteLine("3- Exit");
+            Console.WriteLine("");
+            Console.Write("Enter your choice: ");
+            string choice = Console.ReadLine();
+            //int Choice = Convert.ToInt32(choice);
+
+            //casting
+            bool check = false;
+            while (check == false)  //check if option is valid
+            {
+                if (choice == "1" || choice == "2" || choice == "3")
+                {
+                    check = true;
+                }
+
+                else
+                {
+                    Console.Write("error, Please enter a valid choice: ");  //exception for the char and strings ,, fix this
+                    choice = Console.ReadLine();
+                    //Choice = Convert.ToInt32(choice);
+                }
+            }
+            //validation //done!
+
+            if (choice == "1")
+            {
+                Console.WriteLine("");
+                Console.Write("Enter your username: ");
+                string username;
+                username = Console.ReadLine();
+                Console.Write("Enter your password: ");
+                string password;
+                password = Console.ReadLine();
+                if (username == admin.username && password == admin.password)
+                {
+                    admin.displayOptions();
+                }
+                else
+                {
+                    Console.WriteLine("Error, your username/password is wrong or not in the database");
+                }
+            }
+
+            else if (choice == "2")
+            {
+                Console.WriteLine("");
+                Console.Write("Enter your username: ");
+                string username;
+                username = Console.ReadLine();
+                Console.Write("Enter your password: ");
+                string password;
+                password = Console.ReadLine();
+                //check if valid
+                CUSTOMERS test = new CUSTOMERS(username, password);
+                bool checkValid = test.CustomerValidation(test);
+
+                if (checkValid == false)
+                {
+                    Console.WriteLine("Your username/is wrong or not in the database!");
+                }
+                else
+                {
+                    Console.WriteLine(" *** Weclome " + test.user + " ***");
+                    test.displayOptions();
+                }
+            }
+            else if (choice != "3")
+            {
+                Console.WriteLine("Error, wrong input");
+            }
+
+
+
+        }
+    }
+}
